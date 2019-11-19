@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "Admin";
+    Layout = "~/Views/Shared/_Admin_Layout.cshtml";
+}
+
+
+    <div id="adminLogin" class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5">
+                <div class="card mt-4">
+                    <article class="card-body">
+                        <h4 class="card-title mb-4 mt-1">Admin Log in</h4>
+                        <form v-on:submit.prevent="">
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input name="" class="form-control" placeholder="Email" type="email" v-model="email">
+                            </div> <!-- form-group// -->
+                            <div class="form-group">
+                                <a class="float-right" href="/admin/reset-password">Forgot?</a>
+                                <label>Password</label>
+                                <input class="form-control" placeholder="******" type="password" v-model="password">
+                            </div> <!-- form-group// -->
+                            <div class="form-group">
+                                <button v-cloak v-if="busy" class="btn btn-primary btn-block" disabled>Logging in...&nbsp;&nbsp; <i class="fa fa-sync fa-spin"></i></</button>
+                                <button v-else v-on:click="signIn()" class="btn btn-primary btn-block"> Login  </button>
+                            </div> <!-- form-group// -->
+                            <div v-cloak v-if="error" class="alert alert-danger">{{error}}</div>
+                        </form>
+                    </article>
+                </div> <!-- card.// -->
+                <div class="alert alert-warning text-center mt-5">
+                    This page is for administrator access. <br />
+                    <a class="btn btn-warning mt-3" href="/login">Tenant Login <i class="fas fa-sign-in-alt"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    window.onload = function () {
+        var maintenanceRequest = new Vue({
+            el: '#adminLogin',
+            mounted: function() {
+            },
+            data: {
+                email: '',
+                password: '',
+                error: null,
+                busy: false,
+            },
+            methods: {
+                signIn: function () {
+                    let me = this;
+                    let payload = {
+                        email: me.email,
+                        password: me.password
+                    };
+                    $.ajax({
+                        url: "/admin/login",
+                        type: "POST",
+                        async: true,
+                        data: payload,
+                        success: (response) => {
+                            if (response.success) {
+                                window.location = response.redirect;
+                            }
+                            else {
+                                me.error = response.error;
+
+                            }
+                        },
+                        complete: () => {
+                            me.busy = false;
+                        }
+                    });
+                }
+            },
+            computed: {
+                
+            },
+            filters: {
+
+            },
+        })
+    }
+
+    </script>
+

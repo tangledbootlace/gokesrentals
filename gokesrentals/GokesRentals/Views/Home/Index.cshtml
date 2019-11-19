@@ -1,0 +1,101 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+<div id="login">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card-deck text-center mt-5">
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header">
+                            <h4 class="my-0 font-weight-normal"><i class="fas fa-dollar-sign text-secondary"></i>&nbsp&nbspLatest Payment</h4>
+                        </div>
+                        <div class="card-body"
+                             v-if="payment">
+                            <h1 v-cloak class="card-title pricing-card-title">{{payment.paymentAmount | currency}}</h1>
+                            <p class="text-muted">Success</p>
+                            <a href="/Payments" class="btn btn-lg btn-block btn-info mt-5">Manage Payments</a>
+                        </div>
+                        <div class="card-body"
+                             v-else v-cloak>
+                            <h1 class="card-title pricing-card-title"></h1>
+                            <p class="text-muted" style="margin-bottom: 96px;">Your latest payment will appear here.</p>
+                            <a href="/Payments" class="btn btn-lg btn-block btn-info mt-5">Manage Payments</a>
+                        </div>
+                    </div>
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header">
+                            <h4 class="my-0 font-weight-normal"><i class="fas fa-tools text-secondary"></i>&nbsp&nbspMaintenance</h4>
+                        </div>
+                        <div class="card-body">
+                            <h1 v-cloak class="card-title pricing-card-title">{{reqcount.count}}</h1>
+                            <p class="text-muted">tickets open</p>
+                            <a href="/Maintenance" class="btn btn-lg btn-block btn-outline-info mt-5">Manage Tickets</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center mt-5">
+                    <div class="col-5">
+                        <a href="/logout" class="btn btn-outline-danger btn-block btn-sm">Logout&nbsp&nbsp<i class="fas fa-sign-out-alt"></i></a>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var loginPage;
+    window.onload = function () {
+        loginPage = new Vue({
+            el: '#login',
+            mounted: function () { //Everything here will execute on page load
+
+                this.Requestcount();
+                this.getLastPayment();
+            },
+            data: {
+                reqcount: {
+                    count: ''
+                },
+                payment: null
+            },
+            methods: {
+                Requestcount: function () {
+                    let me = this;
+                    $.ajax({
+                        type: "GET",
+                        url: "/home/CountRequests",
+                        success: (response) => {
+                            me.reqcount.count = response.data;
+                        },
+                    });
+                },
+                getLastPayment: function () {
+                    let me = this;
+                    $.ajax({
+                        type: "GET",
+                        url: "/home/GetLastPayment",
+                        success: (response) => {
+                            if (response.success) {
+                                me.payment = response.data;
+                            }
+                        },
+                    });
+                }
+
+            },
+            computed: {},
+            filters: {
+                currency: function (value) {
+                    if (!value)
+                        return
+
+                    return "$" + value.toFixed(2);
+                },},
+        })
+    }
+</script>
+

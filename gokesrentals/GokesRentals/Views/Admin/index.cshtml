@@ -1,0 +1,43 @@
+﻿
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Admin_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row text-center mt-5">
+        <div class="col-lg-3">
+            <h4>Stripe</h4>
+            <p>Stripe is used to accept payments from tenants. Use Stripe's dashboard to view billing information and issue refunds.</p>
+            <a href="https://dashboard.stripe.com" class="btn btn-outline-info">Stripe Dashboard</a>
+
+        </div>
+        <div class="col-lg-3">
+            <h4>Mailgun</h4>
+            <p style="margin-bottom: 40px;">Emails are sent using mailgun. Use Mailgun's dashboard to troubleshoot sending emails.</p>
+            <a href="https://app.mailgun.com/sessions/new" target="_blank" class=" btn btn-outline-info">Mailgun Dashboard</a>
+
+        </div>
+        <div class="col-lg-3">
+            <h4>Azure</h4>
+            <p style="margin-bottom: 64px;">Visit the portal to deploy and troubleshoot servers.</p>
+            <a href="https://portal.azure.com" target="_blank" class="btn btn-outline-info">Microsoft Azure</a>
+
+        </div>
+        <div class="col-lg-3">
+            <h4>Goke's Invoicer</h4>
+            <p style="margin-bottom: 64px;">Goke's Invoicer creates invoices for properties - runs nightly at 1:00 CT.</p>
+            <a href="http://gokesinvoicer.azurewebsites.net/" target="_blank" class="btn btn-outline-info">Check status</a>
+
+        </div>
+
+    </div>
+    <div class="row justify-content-center text-center mt-5">
+        <div class="col-lg-4">
+            <a href="/logout" class="btn btn-outline-danger btn-block btn-sm">Logout&nbsp&nbsp<i class="fas fa-sign-out-alt"></i></a>
+        </div>
+
+    </div>
+    
+</div>
+

@@ -1,0 +1,366 @@
+﻿@{
+    ViewData["Title"] = "Payments";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="jumbotron jumbotron-fluid" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="container">
+        <h1>Payments</h1>
+    </div>
+</div>
+<div id="paymemts">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col">
+                <div class="text-center">
+                    <h3 v-if="pageBusy" class="text-center">Loading...&nbsp;&nbsp;<i class="fa fa-sync fa-spin"></i></h3>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                In-progress
+            </div>
+            <div class="card-body">
+                <table class="table" v-if="unPaidInvoices.length > 0">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Due On</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-cloak v-for="invoice in unPaidInvoices">
+                            <th>
+                                <p v-if="invoice.paidInFull">Invoice#{{invoice.invoiceID}} <span class="badge badge-pill badge-success">Paid</span></p>
+                                <p v-else>Invoice#{{invoice.invoiceID}} <span class="badge badge-pill badge-warning">Due</span></p>
+                            </th>
+                            <th>{{invoice.amountDue | currency}}</th>
+                            <th>{{invoice.dueDate | time}}</th>
+                            <th><button class="btn btn-outline-info btn-sm" v-on:click="viewInvoiceDetails(invoice)"><i class="fas fa-file-alt"></i>&nbsp;&nbsp;View</button></th>
+                        </tr>
+                    </tbody>
+                </table>
+                <p v-else>You don't have an invoice right now.</p>
+            </div>
+        </div>
+        <div class="card mt-5">
+            <div class="card-header">
+                Complete
+            </div>
+            <div class="card-body">
+                <table class="table" v-if="paidInvoices.length > 0 ">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Due On</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-cloak v-for="invoice in paidInvoices">
+                            <th>
+                                <p v-if="invoice.paidInFull">Invoice#{{invoice.invoiceID}} <span class="badge badge-pill badge-success">Paid</span></p>
+                                <p v-else>Invoice#{{invoice.invoiceID}} <span class="badge badge-pill badge-warning">Due</span></p>
+                            </th>
+                            <th>{{invoice.amountDue | currency}}</th>
+                            <th>{{invoice.dueDate | time}}</th>
+                            <th><button class="btn btn-outline-info btn-sm" v-on:click="viewInvoiceDetails(invoice)"><i class="fas fa-file-alt"></i>&nbsp;&nbsp;View</button></th>
+                        </tr>
+                    </tbody>
+                </table>
+                <p v-else>Your paid invoices will show here.</p>
+            </div>
+        </div>
+    </div>
+    <!-- Make Payment Modal -->
+    <div class="modal fade" id="paymentModal" role="dialog">
+        <div v-if="modalBusy" class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Invoice#</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <h3 class="text-center">Loading...&nbsp;&nbsp;<i class="fa fa-sync fa-spin"></i></h3>
+                </div>
+                <div class="modal-footer mt-5">
+                    <button type="button" class="btn btn-success" disabled>Send Payment</button>
+                    <button type="button" class="btn btn-default">Close</button>
+                </div>
+            </div>
+        </div>
+        <div v-else class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Invoice #{{currentInvoice.invoiceID}}</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="row">
+                                <div class="col-6 font-weight-bold">
+                                    <p class="mb-0">Amount:</p>
+                                    <p class="mb-2">Payments:</p>
+                                    <p class="mb-0">Due:</p>
+                                </div>
+                                <div class="col-6 text-right">
+                                    <p class="mb-0">{{currentInvoice.amountDue | currency}}</p>
+                                    <p class="mb-2">- {{currentPaymentsTotal | currency}}</p>
+                                    <p class="mb-0">{{totalDue | currency}}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <p class="mt-0 mb-3">Make payment <a href="javascript:void(0)">
+                                <i id ="feeTip" class="fa fa-info-circle text-info float-right" style="margin-top: 6px;" 
+                                                                 data-toggle="popover" title="Transaction Fees" 
+                                                                 data-content="A transaction fee of 0.08% with a maximum of $5.00 will be added to your payment. Fees are not credited towards rent payments, but will appear on your receipt."
+                                                                 v-on:click="showToolTip()">
+                                    </i>
+                                    </a>
+                            </p>
+                            <div class="form-group">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="number" v-model="inputPayment" min="0.00" class="form-control" />
+                                </div>
+                            </div>
+                            <p></p>
+                            <div class="float-right">
+                                <div class="row">
+                                    <div class="col">
+                                        <p v-if="hasBillingInfo" class="mb-1">{{ paymentInfo.bank_name }} #{{ paymentInfo.last4 }}</p>
+                                        <p v-else class="mb-1 text-danger">Your billing info is incomplete.</p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <small>
+                                            <a asp-controller="Account" asp-action="Index" class="btn btn-link text-info float-right mt-0">Change Billing Info</a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-5">
+                        <div class="col-lg-6">
+                            <h6>Payment History</h6>
+                            <div v-if="currentPayments.length >0" v-for="payment in currentPayments">
+                                <a v-bind:href="payment.receipt" target="_blank">{{payment.paymentAmount | currency}} - {{payment.date | time}}</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer mt-5">
+                        <button v-if="totalDue !== 0 && newRentalPayment > 0 && !(newRentalPayment> totalDue) && hasBillingInfo == true"
+                                v-on:click="getTransactionFee()"
+                                type="button" class="btn btn-success" >Send Payment of ${{newRentalPayment}}</button>
+
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    window.onload = function () {
+        var maintenanceRequest = new Vue({
+            el: '#paymemts',
+            mounted: function () {
+                this.getInvoices();
+                this.getPaymentInfo();
+            },
+            data: {
+                paidInvoices: [],
+                unPaidInvoices:[],
+                currentInvoice: {
+                    invoiceID: '',
+                    invoiceNumber: '',
+                    amountDue: 0,
+                    billDate: '',
+                    propertyID: '',
+                    paidInFull: Boolean,
+                },
+                currentPayments: [],
+                inputPayment: 0.00,
+                transactionFee: 0.00,
+                paymentInfo: {},
+                modalBusy: false,
+                pageBusy: false,
+                payBtnBusy: false,
+                hasBillingInfo: false,
+            },
+            methods: {
+                getInvoices: function () {
+                    var me = this;
+                    me.pageBusy = true;
+
+                    $.ajax({
+                        type: "GET",
+                        url: "/Payments/GetInvoices",
+                        success: (data) => {
+                            if (data.success) {
+                                me.paidInvoices = data.paidInvoices;
+                                me.unPaidInvoices = data.unPaidInvoices;
+                            }
+
+                        },
+                        complete: () => {
+                            me.pageBusy = false;
+                        }
+                    });
+                },
+                viewInvoiceDetails: function (invoice) {
+                    var me = this;
+                    me.modalBusy = true;
+
+                    //Open modal if isn't already open
+                    $('#paymentModal').modal('toggle');
+
+                    $.ajax({
+                        type: "GET",
+                        url: "/Payments/ViewInvoiceDetails?invoiceNumber=" + invoice.invoiceNumber,
+                        success: (payload) => {
+                            if (payload.success) {
+                                me.currentInvoice = invoice;
+                                me.currentPayments = payload.data;
+                            }
+
+                        },
+                        complete: () => {
+                            me.modalBusy = false;
+                        }
+                    });
+                },
+                newInvoicePayment: function () {
+                    var me = this;
+                    me.payBtnBusy = true;
+                    p = me.newRentalPayment;
+                    me.transactionFee = Number(me.transactionFee);
+                    payload = {
+                        payment: p,
+                        invoiceID: me.currentInvoice.invoiceID,
+                        fee: me.transactionFee.toFixed(2)
+                    };
+                    if (!window.confirm("Please confirm your payment of $" + payload.payment + " plus an additional transaction fee of $" + payload.fee + ". ")){
+                        return;
+                    }
+                    $.ajax({
+                        type: "POST",
+                        url: "/Payments/NewInvoicePayment",
+                        data: payload,
+                        success: (payload) => {
+                            if (payload.success) {
+                                //reload invoices and current invoices
+                                me.getInvoices();
+                                me.viewInvoiceDetails(me.currentInvoice);
+                            }
+
+                        },
+                        complete: () => {
+                            me.payBtnBusy = false;
+                        }
+                    });
+                },
+                getPaymentInfo: function () {
+                    let me = this;
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/Account/GetPaymentInfo",
+                        success: (response) => {
+                            if (response.success) {
+
+                                if (response.isVerified === false) {
+                                    me.hasbillingInfo = false;
+                                }
+                                else {
+                                    me.hasBillingInfo = true;
+                                    me.paymentInfo = response.paymentInfo;
+                                }
+
+                            }
+                            else {
+                                me.hasBillingInfo = false;
+                            }
+                        }
+                    });
+                },
+                getTransactionFee: function () {
+                    me = this;
+                    $.ajax({
+                        type: "GET",
+                        url: "/Payments/CalculateACHFee?amount=" + me.newRentalPayment,
+                        success: (payload) => {
+                            if (payload.success) {
+                                me.transactionFee = payload.data;
+                                me.newInvoicePayment();
+                            }
+
+                        },
+                        complete: () => {
+                        }
+                    });
+                },
+                showToolTip: function () {
+                    jQuery('#feeTip').popover('toggle');
+                }
+            },
+            computed: {
+                currentPaymentsTotal: function () {
+                    var me = this;
+                    let total = 0;
+                    me.currentPayments.forEach(function (element) {
+                        total += element.paymentAmount;
+                    });
+                    return total;
+                },
+                totalDue: function () {
+                    var me = this;
+                    if (!me.currentInvoice)
+                        return
+
+                    return me.currentInvoice.amountDue - me.currentPaymentsTotal;
+                },
+                newRentalPayment: function () {
+                    var me = this;
+                    if (me.inputPayment == 0)
+                        return
+                    let input = Number(me.inputPayment);
+
+                    return input.toFixed(2);
+                }
+            },
+            filters: {
+                currency: function (value) {
+                    if (!value)
+                        return
+
+                    return "$" + value.toFixed(2);
+                },
+                time: function (value) {
+                    if (!value)
+                        return
+                    var time = moment.utc(value);
+                    return time.local().format("MMMM Do YYYY, LT");
+                }
+            },
+
+        });
+    }
+</script>
+
+
+

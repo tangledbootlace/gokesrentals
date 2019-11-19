@@ -1,0 +1,551 @@
+
+@{
+    ViewData["Title"] = "Account";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="jumbotron jumbotron-fluid" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="container">
+        <h1>Account</h1>
+    </div>
+</div>
+<div id="accountDetails" class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <form v-on:submit.prevent>
+                <h4>Personal Info</h4>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="firstName" class="form-control" v-model="personalInfo.firstName" />
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="lastName" class="form-control" v-model="personalInfo.lastName" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="email" class="form-control" v-model="personalInfo.emailAddress" />
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="text" id="phone" class="form-control" v-model="personalInfo.phoneNumber" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col">
+                        <div class="float-right">
+                            <button v-cloak v-if="isBusy.personalInfo" class="btn btn-primary" disabled>Working...&nbsp;&nbsp;<i class="fa fa-sync fa-spin"></i></button>
+                            <button v-else class="btn btn-outline-primary" v-on:click="updatePersonalInfo()">Update Personal Info</button>
+                        </div>
+                    </div>
+                </div>
+                <h4>Employment Details</h4>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Employer</label>
+                            <input type="text" class="form-control" v-model="employmentInfo.employer" />
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Job Title</label>
+                            <input type="text" class="form-control" v-model="employmentInfo.jobTitle" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col">
+                        <div class="float-right">
+                            <button v-cloak v-if="isBusy.employmentInfo" class="btn btn-primary" disabled>Working...&nbsp;&nbsp;<i class="fa fa-sync fa-spin"></i></button>
+                            <button class="btn btn-outline-primary" v-else v-on:click="updateEmploymentInfo()">Update Employment Details</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <h4 class="mb-3">Billing Info</h4>
+            <div v-cloak v-if="hasBillingInfo && billingInfo.isVerified">
+                <div class="float-right">
+                    <div class="row">
+                        <div class="col">
+                            <p class="mb-1">{{ paymentInfo.bank_name }} #{{ paymentInfo.last4 }}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <small>
+                                <button class="btn btn-link text-info float-right mt-0" v-on:click="hasBillingInfo = false">Change Billing Info</button>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-cloak v-else>
+                <div v-cloak v-if="billingInfo.isVerified === false" class="row">
+                    <div class="col-lg-12">
+                        <h4 class="text-danger">Verification Required</h4>
+                        <p>We need to verify your bank account before you can make payments. Two deposits were made into the bank account provided to verify your ownership.</p>
+
+                        <button class="btn btn-primary text-center" data-toggle="modal" data-target="#confirmBankModal">Confirm Deposits Now</button>
+                        <p class="pt-2 text-info"><a style="text-decoration:underline" href="javascript:void(0)" v-on:click="hasBillingInfo = false; billingInfo.isVerified = true;">Start over</a></>
+                        <p>Please allow up to 5-10 business days for the desposits to appear.</p>
+
+                    </div>
+                </div>
+                <div v-cloak v-if="hasBillingInfo === false">
+
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label>Account Holder Name</label>
+                                <input type="text" class="form-control" v-model="billingInfo.accountHolderName" />
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label>Holder Type</label>
+                                <input type="text" class="form-control" value="individual" v-model="billingInfo.holderType" readonly />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label>Account Number</label>
+                                <input type="text" class="form-control" v-model="billingInfo.accountNumber" />
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group">
+                                <label>Routing Number</label>
+                                <input type="text" class="form-control" v-model="billingInfo.routingNumber" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="float-right">
+                                <button v-cloak v-if="isBusy.bankInfo" class="btn btn-primary" disabled>Working...&nbsp;&nbsp;<i class="fa fa-sync fa-spin"></i></button>
+                                <button v-else class="btn btn-outline-primary" v-on:click="getToken()">Update Bank Info</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    My Address
+                </div>
+                <div v-cloak class="card-body">
+                    <p class="card-text mb-0">{{widgetInfo.address1}}</p>
+                    <p class="card-text mb-0">{{widgetInfo.address2}}</p>
+                    <p class="card-text">{{widgetInfo.city}}, {{widgetInfo.state}} {{widgetInfo.zipcode}}</p>
+                    <p class="card-text"><strong>Rate:</strong> ${{widgetInfo.rentCharge}}</p>
+                    <div class="text-right">
+                        <a v-if="personalInfo.contractLink"
+                           :href="personalInfo.contractLink" target="_blank"
+                                class="btn btn-block btn-outline-secondary mt-1"><i class="fas fa-file-contract"></i> Contract</a>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    @* Confirm Bank Account Modal *@
+    <div class="modal fade" id="confirmBankModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Verify Bank Account</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <p>Please verify the deposits made into your account. The order does not matter.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class=" jumbotron jumbotron-fluid" style="border-top: 1px solid #888784; border-bottom: 1px solid #888784">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <label>First deposit</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="number" step="0.01" max="2500" v-model="confirmationDepositInput.first" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <label>Second deposit</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="number" step="0.01" max="2500" v-model="confirmationDepositInput.second" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="row pb-4">
+                        <div class="col-lg-12">
+                            <p>Up to 10 attempts are allowed before your account is blocked from making payments.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button v-cloak v-if="isBusy.confirmation" class="btn btn-success" disabled>Confirming...&nbsp;&nbsp;<i class="fa fa-sync fa-spin"></i></button>
+                        <button v-else type="button" class="btn btn-success" v-on:click="confirmDeposit()">Confirm Deposits</button>
+
+                        <button type="button" class="btn" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    var accountDetails;
+    window.onload = function () {
+        accountDetails = new Vue({
+            el: '#accountDetails',
+            mounted: function () { //Everything here will execute on page load
+                this.getPersonalInfo();
+                this.getPaymentInfo();
+                this.getEmploymentInfo();
+                this.getWidgetInfo();
+            },
+            data: {
+                billingInfo: {
+                    accountHolderName: '',
+                    holderType: 'individual',
+                    accountNumber: '000123456789',
+                    routingNumber: '110000000',
+                    isVerified: Boolean
+                },
+                personalInfo: {
+                    firstName: '',
+                    lastName: '',
+                    emailAddress: '',
+                    phoneNumber: '',
+                    contractLink: '',
+                },
+                employmentInfo: {
+                    employer: '',
+                    jobTitle: ''
+                },
+                widgetInfo: {
+                    propertyID: '',
+                    address1: '',
+                    address2: '',
+                    city: '',
+                    state: '',
+                    zipcode: '',
+                    rentCharge: '',
+                },
+                paymentInfo: {},
+                hasBillingInfo: false,
+                confirmationDepositInput: {
+                    first: '0.00',
+                    second: '0.00',
+                },
+                isBusy: {
+                    confirmation: false,
+                    bankInfo: false,
+                    personalInfo: false,
+                    employmentInfo: false,
+
+                }
+            },
+            methods: {
+                getToken: function () {
+                    let stripe = Stripe('pk_test_xJvFloiXEWQr51klqe8qaDjR');
+                    var self = this;
+                    self.isBusy.bankInfo = true;
+
+                    stripe.createToken('bank_account', {
+                        country: 'US',
+                        currency: 'USD',
+                        routing_number: this.billingInfo.routingNumber,
+                        account_number: this.billingInfo.accountNumber,
+                        account_holder_name: this.billingInfo.accountHolderName,
+                        account_holder_type: this.billingInfo.holderType,
+                    }).then(function (result) {
+                        if (typeof result.error !== 'undefined') {
+                            alert(result.error.code + " " + result.error.message);
+                            self.isBusy.bankInfo = false;
+                        }
+                        else {
+                            console.log(result);
+                            self.saveToken(result.token);
+                        }
+                    });
+                },
+                saveToken: function (stripeToken) {
+                    let me = this;
+                    let payload = {
+                        StripeToken: stripeToken.id,
+                        IsTypeBank: (stripeToken.bank_account.type === "bank_account") ? false : true,
+                        BankName: stripeToken.bank_account.bank_name,
+                        LastFour: stripeToken.bank_account.last4
+                    }
+                    $.ajax({
+                        url: "/Account/UpdateBillingInfo",
+                        type: "POST",
+                        async: true,
+                        data: payload,
+                        success: (response) => {
+                            if (!response.success) {
+                                alert("Error");
+                            }
+                            else {
+                                //Fetch re-fetch payment info from DB
+                                me.getPaymentInfo();
+                            }
+                        },
+                        complete: () => {
+                            me.isBusy.bankInfo = false;
+                        }
+                    });
+                },
+                validatePersonalInfo: function () {
+                    console.log("validate");
+                    let isValid = true;
+                    let me = this;
+
+                    if (me.personalInfo.firstName === '') {
+                        isValid = false;
+                        document.getElementById('firstName').classList.add('isInvalid');
+                    }
+                    else {
+                        document.getElementById('firstName').classList.remove('isInvalid');
+                    }
+
+                    if (me.personalInfo.lastName === '') {
+                        isValid = false;
+                        document.getElementById('lastName').classList.add('isInvalid');
+                    }
+                    else {
+                        document.getElementById('lastName').classList.remove('isInvalid');
+                    }
+
+                    if (me.personalInfo.email === '') {
+                        isValid = false;
+                        document.getElementById('email').classList.add('isInvalid');
+                    }
+                    else {
+                        document.getElementById('lastName').classList.remove('isInvalid');
+                    }
+
+
+                    if (me.personalInfo.phone === '') {
+                        isValid = false;
+                        document.getElementById('phone').classList.add('isInvalid');
+                    }
+                    else {
+                        document.getElementById('phone').classList.remove('isInvalid');
+                    }
+
+                    return isValid;
+                },
+                updatePersonalInfo: function () {
+                    let me = this;
+                    me.isBusy.personalInfo = true;
+                    if (this.validatePersonalInfo()) {
+                        $.ajax({
+                            type: "POST",
+                            url: "/Account/UpdatePersonalInfo",
+                            data: me.personalInfo,
+                            success: (data) => {
+                                if (data.success) {
+                                    window.alert('Success!');
+                                }
+                                else {
+                                    window.alert('An error occured');
+                                }
+                            },
+                            complete: () => {
+                                me.isBusy.personalInfo = false;
+                            },
+                        });
+                    }
+                },
+                getPersonalInfo: function () {
+                    let me = this;
+                    $.ajax({
+                        type: "POST",
+                        url: "/Account/GetPersonalInfo",
+                        success: (response) => {
+                            if (response.success) {
+                                me.personalInfo = response.data;
+                            }
+
+                        },
+                        complete: () => {
+
+                        },
+                    });
+                },
+                getPaymentInfo: function () {
+                    let me = this;
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/Account/GetPaymentInfo",
+                        success: (response) => {
+                            if (response.success) {
+
+                                if (response.isVerified === false) {
+                                    me.billingInfo.isVerified = false;
+                                    me.hasBillingInfo = response.hasBillingInfo;
+                                    me.paymentInfo = response.paymentInfo;
+                                }
+                                else {
+                                    console.log(response.paymentInfo);
+                                    me.hasBillingInfo = true;
+                                    me.billingInfo.isVerified = true;
+                                    me.paymentInfo = response.paymentInfo;
+                                }
+
+                            }
+                            else {
+                                me.hasBillingInfo = false;
+                            }
+
+                        },
+                    });
+                },
+                getWidgetInfo: function () {
+                    let me = this;
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/Account/GetWidgetInfo",
+                        success: (response) => {
+                            if (response.success) {
+                                me.widgetInfo = response.data;
+                            }
+                            else {
+
+                            }
+
+                        },
+                    });
+                },
+                getEmploymentInfo: function () {
+                    let me = this;
+                    $.ajax({
+                        type: "GET",
+                        url: "/Account/GetEmploymentInfo",
+                        success: (response) => {
+                            if (response.success) {
+                                me.employmentInfo.employer = response.data.employer;
+                                me.employmentInfo.jobTitle = response.data.jobTitle;
+                            }
+                            else {
+                                alert(response.error.toString());
+                            }
+
+                        },
+                    });
+                },
+                updateEmploymentInfo: function () {
+                    var me = this;
+                    me.isBusy.employmentInfo = true;
+                    $.ajax({
+                        type: "POST",
+                        url: "/Account/UpdateEmploymentInfo",
+                        data: me.employmentInfo,
+                        success: (response) => {
+                            if (response.success) {
+                                alert("Success!");
+                            }
+                            else {
+                                alert("An unknown error occured.");
+                            }
+
+                        },
+                        complete: () => {
+                            me.isBusy.employmentInfo = false;
+                        }
+                    });
+                },
+                confirmDeposit: function () {
+                    let me = this;
+
+                    me.isBusy.confirmation = true;
+                    let c = me.confirmationDepositInput;
+                    c.first = parseFloat(c.first).toFixed(2);
+                    c.second = parseFloat(c.second).toFixed(2);
+
+                    if (isNaN(c.first) || isNaN(c.second)) {
+                        c.first = '0.00';
+                        c.second = '0.00';
+                        me.isBusy.confirmation = false;
+
+                        alert("Deposits must be greater than $0.00");
+                        return;
+                    }
+                    if (c.first <= '0.00' || c.second <= '0.00') {
+                        me.isBusy.confirmation = false;
+
+                        alert("Deposits must be greater than $0.00");
+                        return;
+                    }
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/Account/VerifyBankAccount",
+                        async: true,
+                        data: me.confirmationDepositInput,
+                        success: (response) => {
+                            if (response.success) {
+                                me.getPaymentInfo();
+                                me.billingInfo.isVerified = true;
+                                $('#confirmBankModal').modal('toggle');
+                                me.isBusy.confirmation = false;
+                            }
+                            else {
+                                alert(response.error);
+                            }
+
+                        },
+                        complete: () => {
+                            me.isBusy.confirmation = false;
+                        },
+                    });
+                }
+            },
+            computed: {
+                currency: function (value) {
+                    if (!value)
+                        return
+
+                    return "$" + value.toFixed(2);
+                },
+            },
+            filters: {},
+        })
+    }
+</script>

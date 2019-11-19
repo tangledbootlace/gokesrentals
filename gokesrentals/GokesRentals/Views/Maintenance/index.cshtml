@@ -1,0 +1,193 @@
+@{
+    ViewData["Title"] = "Maintenance";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="jumbotron jumbotron-fluid" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="container">
+        <h1>Maintenance</h1>
+    </div>
+</div>
+<div id="maintenanceRequest">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div class="text-center"> 
+                    <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#maintenanceModal">Request Maintenance</button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <h3>Open</h3>
+                <table class="table table-striped">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th style="width: 10%">Request #</th>
+                            <th style="width: 20%">Subject</th>
+                            <th style="width: 50%">Description</th>
+                            <th style="width: 10%">Opened</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-cloak v-for="requests in requestHistory.active">
+
+                            <td>{{requests.ticketID}}</td>
+                            <td>{{requests.summary}}</td>
+                            <td>{{requests.description}}</td>
+                            <td>{{requests.openDate | time}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="col">
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <h3>Closed</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 10%">Request #</th>
+                            <th style="width: 20%">Subject</th>
+                            <th style="width: 50%">Description</th>
+                            <th style="width: 10%">Closed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-cloak v-for="requests in requestHistory.inactive">
+
+                            <td>{{requests.ticketID}}</td>
+                            <td>{{requests.summary}}</td>
+                            <td>{{requests.description}}</td>
+                            <td>{{requests.endDate | time}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @*Request Maintenance Modal*@
+    <form class="needs-validation" v-on:submit.prevent="" novalidate>
+        <div class="modal fade" id="maintenanceModal" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Maintenance Request</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="subject">Subject:</label>
+                        <input type="text" class="form-control" id="summary" v-model="request.summary" required>
+                        <div class="invalid-feedback">
+                            Please write a summary for the request.
+                        </div>
+                        <label for="description">Description:</label>
+                        <textarea class="form-control" rows="5" id="description" v-model="request.description" required></textarea>
+                        <small>{{ characters }}/300</small>
+                        <div class="invalid-feedback">
+                            Please write a description for the request.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button v-cloak v-if="btnSubmitBusy" class="btn btn-success" disabled>Working...&nbsp;&nbsp;<i class="fa fa-sync fa-spin"></i></button>
+                        <button type="submit" class="btn btn-success" v-else v-on:click="createRequest()">Submit Maitenance Request</button>
+
+                        <button type="submit" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    window.onload = function () {
+        var maintenanceRequest = new Vue({
+            el: '#maintenanceRequest',
+            mounted: function () {
+                this.getRequests();
+            },
+            data: {
+                request: {
+                    summary: '',
+                    description: ''
+                },
+                requestHistory: {
+                    active: [],
+                    inactive: []
+                },
+                hasTooManyChar: false,
+                btnSubmitBusy: false,
+            },
+            methods: {
+                createRequest: function () {
+                    let me = this;
+                    me.btnSubmitBusy = true;
+                    if (!this.hasTooManyChar && this.request.description !== '' && this.request.summary !== '') {
+                        $.ajax({
+                            type: "POST",
+                            url: "/Maintenance/MakeMaintenanceRequest",
+                            data: me.request,
+                            success: (data) => {
+                                $('#maintenanceModal').modal('toggle');
+                                alert("Request Sent");
+                                me.getRequests();
+                            },
+                            complete: () => {
+                                me.btnSubmitBusy = false;
+                                me.clearModal();
+                            }
+                        });
+                    }
+                    else {
+                        me.btnSubmitBusy = false;
+                    }
+                },
+                getRequests: function () {
+                    let me = this;
+                    me.btnBusy = true;
+                    $.ajax({
+                        type: "GET",
+                        url: "/Maintenance/FetchMaitenanceRequest",
+                        success: (data) => {
+                            me.requestHistory.active = data.active;
+                            me.requestHistory.inactive = data.inactive;
+                        },
+                        complete: () => {
+                            me.btnBusy = false;
+                        }
+                    });
+                },
+                clearModal: function () {
+                    this.request.summary = "";
+                    this.request.description = "";
+                },
+            },
+            computed: {
+                characters: function () {
+                    if (this.request.description.length > 300) {
+                        this.hasTooManyChar = true;
+                        document.getElementById('description').classList.add('isInvalid');
+                    }
+                    else {
+                        this.hasTooManyChar = false;
+                        document.getElementById('description').classList.remove('isInvalid');
+                    }
+                    return this.request.description.length;
+                }
+            },
+            filters: {
+                time: function (value) {
+                    if (!value)
+                        return
+                    var time = moment.utc(value);
+                    return time.local().format("MMMM Do YYYY, LT");
+                }
+            },
+        })
+    }
+</script>
+

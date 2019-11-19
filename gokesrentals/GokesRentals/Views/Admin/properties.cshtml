@@ -1,0 +1,451 @@
+﻿@{
+    ViewData["Title"] = "properties";
+    Layout = "~/Views/Shared/_Admin_Layout.cshtml";
+}
+<div class="jumbotron jumbotron-fluid" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="container">
+        <h1>Properties</h1>
+    </div>
+</div>
+<div id="Properties">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div class="text-center">
+                    <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#propertyModal">Add a Property</button>
+                </div>
+            </div>
+        </div>
+        <h3>All Properties</h3>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Address</th>
+                    <th>Value</th>
+                    <th>Rent</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="Props in AllProperties">
+                    <th>{{Props.address1}}<br />{{Props.address2}}<br />{{Props.city}}, {{Props.state}} {{Props.zipcode}}</th>
+                    <th>{{Props.propertyValue | currency}}</th>
+                    <th>{{Props.rentCharge | currency}}</th>
+                    <th>
+
+                                <button class="btn btn-outline-info" v-on:click="editPropertyModal(Props.propertyID)"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-outline-success" v-on:click="showReport(Props.propertyID)"><i class="fas fa-chart-bar"></i></button>
+                            <div class="clickable" style="display:inline-block">
+                                
+                            </div>
+
+
+                    </th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    @*Add Property Modal*@
+    <form class="needs-validation" v-on:submit.prevent="" novalidate>
+        <div class="modal fade" id="propertyModal" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Add a New Property</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Address</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="" id="address1" v-model="property.address1" required>
+                                    <div class="invalid-feedback">
+                                        Please provide an address
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Address 2</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="" id="address1" v-model="property.address2" required>
+                                    <div class="invalid-feedback">
+                                        Please provide an address
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">City</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="city" v-model="property.city" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a city
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">State</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="state" v-model="property.state" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a state
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Zipcode</span>
+                                    </div>
+                                    <input type="text" class="form-control" id="zipcode" v-model="property.zipcode" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a zipcode
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Value $</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="200000" id="propertyValue" v-model="property.propertyValue" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a property value
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Rent $</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="800" id="rentCharge" v-model="property.rentCharge" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a rent charge
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-success" v-on:click="AddProperty()">Add Property</button>
+                            <button type="submit" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    @*Edit Property*@
+    <div class="modal fade" id="editPropertyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Editing Property #{{editProperty.propertyID}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Address 1</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="" id="address1" v-model="editProperty.address1" required>
+                                <div class="invalid-feedback">
+                                    Please provide Address 1
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Address 2</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="" id="address2" v-model="editProperty.address2" required>
+                                <div class="invalid-feedback">
+                                    Please provide Address 2
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">City</span>
+                                </div>
+                                <input type="text" class="form-control" id="city" v-model="editProperty.city" required>
+                                <div class="invalid-feedback">
+                                    Please provide a City
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">State</span>
+                                </div>
+                                <input type="text" class="form-control" id="state" v-model="editProperty.state" required>
+                                <div class="invalid-feedback">
+                                    Please provide a State
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Zipcode</span>
+                                </div>
+                                <input type="text" class="form-control" id="zipcode" v-model="editProperty.zipcode" required>
+                                <div class="invalid-feedback">
+                                    Please provide a Zipcode
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Rent $</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="Rent Charge" id="rentCharge" v-model="editProperty.rentCharge" required>
+                                <div class="invalid-feedback">
+                                    Please provide a Rent Charge
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Value $</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="Property Value" id="propertyValue" v-model="editProperty.propertyValue" required>
+                                <div class="invalid-feedback">
+                                    Please provide a Property Value
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+
+
+                        <button class="btn btn-success" v-on:click="SaveProperty()">Save Property</button>
+                        <button class="btn btn-outline-danger" v-on:click="DeleteProperty()"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @*Reports*@
+    <div class="modal fade" id="reportsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Report for ID# {{report.propertyID}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-6 text-center">
+                            <h5>Maintenance Expense</h5>
+                            <p>{{report.expense | currency}}</p>
+                        </div>
+                        <div class="col-lg-6 text-center">
+                            <h5>Revenue</h5>
+                            <p>{{report.revenue | currency}}</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    window.onload = function () {
+        var Properties = new Vue({
+            el: '#Properties',
+            mounted: function () {
+                this.getProperties();
+            },
+            data: {
+                property: {
+                    address1: '',
+                    address2: '',
+                    city: '',
+                    state: '',
+                    zipcode: '',
+                    propertyValue: '',
+                    rentCharge: ''
+                },
+                editProperty: {
+                    propertyID: '',
+                    address1: '',
+                    address2: '',
+                    city: '',
+                    state: '',
+                    zipcode: '',
+                    propertyValue: '',
+                    rentCharge: ''
+                },
+                report: {
+                    propertyID: '',
+                    revenue: '',
+                    expense: ''
+                },
+                AllProperties: [],
+            },
+            methods: {
+                showReport: function (propertyID) {
+                    console.log(propertyID);
+                    this.getReport(propertyID);
+
+                },
+                getReport: function (propertyID) {
+                    let me = this;
+                    me.report.propertyID = propertyID;
+                    $.ajax({
+                        type: "POST",
+                        url: "/admin/GetReport",
+                        data: me.report,
+                        success: (response) => {
+                            console.log(response);
+                            me.report.revenue = response.revenue;
+                            me.report.expense = response.expense;
+                            $('#reportsModal').modal('toggle');
+                        },
+                    });
+                },
+                AddProperty: function () {
+                    let me = this;
+                    if (this.property.address1 !== '' && this.property.city !== '' &&
+                        this.property.state !== '' && this.property.zipcode !== '' && this.property.propertyValue !== '' &&
+                        this.property.rentCharge !== '') {
+                        $.ajax({
+                            type: "POST",
+                            url: "/admin/MakeProperty",
+                            data: me.property,
+                            success: (data) => {
+                                $('#propertyModal').modal('toggle');
+                                alert("Property created");
+                                me.getProperties();
+                            },
+                        });
+                    }
+                },
+                getProperties: function () {
+                    let me = this;
+                    $.ajax({
+                        type: "GET",
+                        url: "/admin/FetchAllProperties",
+                        success: (data) => {
+                            me.AllProperties = data.data;
+                        },
+                    });
+                },
+                editPropertyModal: function (propertyId) {
+                    let me = this;
+                    console.log(propertyId);
+                    this.editProperty = me.getPropertyFromArray(propertyId);
+                    $('#editPropertyModal').modal('toggle');
+                },
+                getPropertyFromArray: function (propertyId) {
+
+                    let me = this;
+                    for (var i = 0; i < me.AllProperties.length; i++) {
+                        if (propertyId == me.AllProperties[i].propertyID) {
+                            var property = me.AllProperties[i];
+                            return property;
+                        }
+                    }
+                },
+                SaveProperty: function () {
+                    let payload = this.editProperty;
+                    $.ajax({
+                        type: "POST",
+                        url: "/admin/EditProperty",
+                        data: payload,
+                        success: (data) => {
+                            if (data.success) {
+                                alert("Success!");
+                                $('#editPropertyModal').modal('toggle');
+                            }
+                            else {
+                                alert(data.error);
+                            }
+                        },
+                    });
+                },
+                DeleteProperty: function () {
+                    let me = this;
+                    let payload = me.editProperty;
+                    let ok = confirm("Are you sure you would like to delete this property and reassign associated maintenance tickets?");
+                    if (ok) {
+                        $.ajax({
+                            type: "POST",
+                            url: "/admin/DeleteProperty",
+                            data: payload,
+                            success: (data) => {
+                                if (data.success) {
+                                    alert("Success!");
+                                    me.getProperties();
+                                    $('#editPropertyModal').modal('toggle');
+                                }
+                                else {
+                                    alert(data.error);
+                                }
+                            },
+                        });
+                    }
+                }
+            },
+            computed: {
+                characters: function () {
+                    if (this.request.description.length > 300) {
+                        this.hasTooManyChar = true;
+                        document.getElementById('description').classList.add('isInvalid');
+                    }
+                    else {
+                        this.hasTooManyChar = false;
+                        document.getElementById('description').classList.remove('isInvalid');
+                    }
+                    return this.request.description.length;
+                }
+            },
+            filters: {
+                currency: function (value) {
+                    if (!value && value !== 0)
+                        return
+
+                    return "$" + value.toFixed(2);
+                }
+            },
+        })
+    }
+</script>

@@ -1,0 +1,415 @@
+﻿@{
+    ViewData["Title"] = "tennants";
+    Layout = "~/Views/Shared/_Admin_Layout.cshtml";
+}
+<div class="jumbotron jumbotron-fluid" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="container">
+        <h1>Tenants</h1>
+    </div>
+</div>
+<div id="Tenants">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div class="text-center">
+                    <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#tenantModal">Add a Tenant</button>
+                </div>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <h3>All Tenants</h3>
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone #</th>
+                        <th>Edit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="Tens in AllTenants">
+                        <th>{{Tens.firstName}} {{Tens.lastName}}</th>
+                        <th>{{Tens.emailAddress}}</th>
+                        <th>{{Tens.phoneNumber}}</th>
+                        <th>
+                            <button class="btn btn-outline-info" v-on:click="editTenantModal(Tens.tenantID)"><i class="fas fa-edit"></i></button>
+                        </th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @*Add Tenant Modal*@
+    <form class="needs-validation" v-on:submit.prevent="" novalidate>
+        <div class="modal fade" id="tenantModal" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Add a New Tenant</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">First Name</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="John" id="firstName" v-model="tenant.firstName" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a first name
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Last Name</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="Doe" id="lastName" v-model="tenant.lastName" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a last name
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Email Address</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="email@example.com" id="emailAddress" v-model="tenant.emailAddress" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a Email Address
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Phone #</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="6153900000" id="phoneNumber" v-model="tenant.phoneNumber" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a Phone Number
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <label>Property</label>
+                                <select id="properties" class="form-control"
+                                        v-model="selected">
+                                    <option v-for="prop in properties"
+                                            :value="prop.propertyID">
+                                        {{prop.rentCharge | currency}} - {{prop.address1}} {{prop.address2}} {{prop.city}}, {{prop.state}} {{prop.zipcode}}
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please provide a propertyID
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <label>&nbsp;</label>
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">Contract</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="https://drive.google.com/open?id=1hYT_Yf41o8JO2nWLQu1ylo8tv9l0DtB7mpXEyqNLL" id="contractLink" v-model="tenant.contract" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a Phone Number
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-success" v-on:click="AddTenant()">Add Tenant</button>
+                            <button type="submit" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    @*Edit Tenant*@
+    <div class="modal fade" id="editTenantModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Editing {{editTenant.firstName}} {{editTenant.lastName}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">First Name</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="John" id="firstName" v-model="editTenant.firstName" required>
+                                <div class="invalid-feedback">
+                                    Please provide a first name
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Last Name</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="Doe" id="lastName" v-model="editTenant.lastName" required>
+                                <div class="invalid-feedback">
+                                    Please provide a last name
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Email Address</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="email@example.com" id="emailAddress" v-model="editTenant.emailAddress" required>
+                                <div class="invalid-feedback">
+                                    Please provide a Email Address
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Phone #</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="6153900000" id="phoneNumber" v-model="editTenant.phoneNumber" required>
+                                <div class="invalid-feedback">
+                                    Please provide a Phone Number
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <label>Property</label>
+                            <select id="properties" class="form-control"
+                                    v-model="editTenant.propertyID">
+                                <option v-for="prop in properties"
+                                        :value="prop.propertyID">
+                                    {{prop.rentCharge | currency}} - {{prop.address1}} {{prop.address2}} {{prop.city}}, {{prop.state}} {{prop.zipcode}}
+                                </option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please provide a propertyID
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <label>&nbsp;</label>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Contract</span>
+                                </div>
+                                <input type="text" class="form-control" placeholder="https://drive.google.com/open?id=1hYT_Yf41o8JO2nWLQu1ylo8tv9l0DtB7mpXEyqNLL" id="contractLink" v-model="editTenant.contractLink" required>
+                                <div class="invalid-feedback">
+                                    Please provide a Phone Number
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" v-on:click="SaveTenant()">Save Tenant</button>
+                    <button class="btn btn-outline-danger" v-on:click="deleteTenant()"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.onload = function () {
+        var Properties = new Vue({
+            el: '#Tenants',
+            mounted: function () {
+                this.getTenants();
+                this.fetchProperties();
+            },
+            data: {
+                tenant: {
+                    firstName: '',
+                    lastName: '',
+                    propertyID: '',
+                    emailAddress: '',
+                    phoneNumber: '',
+                    contract: ''
+                },
+                editTenant: {
+                    firstName: '',
+                    lastName: '',
+                    propertyID: '',
+                    emailAddress: '',
+                    phoneNumber: '',
+                    contractLink: ''
+                },
+                request: {
+                    summary: '',
+                    description: ''
+                },
+                AllTenants: [],
+                properties: [],
+                popoverProperty: '',
+            },
+            methods: {
+                AddTenant: function () {
+                    let me = this;
+                    if (this.tenant.firstName !== '' && this.tenant.lastName !== '' && this.tenant.propertyID > 0 && this.tenant.emailAddress != '') {
+                        $.ajax({
+                            type: "POST",
+                            url: "/admin/MakeTenant",
+                            data: me.tenant,
+                            success: (data) => {
+                                if (data.success) {
+                                    $('#tenantModal').modal('toggle');
+                                    alert("Tenant created. Password set to: changeme123");
+                                    me.getTenants();
+                                } else {
+                                    alert(data.error);
+                                }
+
+                            },
+                        });
+                    }
+                    else {
+                        alert("Required fields are missing.")
+                    }
+                },
+                editTenantModal: function (tenantId) {
+                    let me = this;
+                    console.log(tenantId);
+                    me.editTenant = me.getTenantFromArray(tenantId);
+                    $('#editTenantModal').modal('toggle');
+                },
+                deleteTenant: function () {
+                    let me = this;
+                    let ok = confirm("Are you sure you want to delete this tenant?");
+                    let payload = me.editTenant;
+                    if (ok) {
+                        $.ajax({
+                            type: "POST",
+                            url: "/admin/DeleteTenant",
+                            data: payload,
+                            success: (data) => {
+                                if (data.success) {
+                                    alert("Success!");
+                                    $('#editTenantModal').modal('toggle');
+                                    me.getTenants();
+                                }
+                                else {
+                                    alert(data.error);
+                                }
+                            },
+                        });
+                    }
+                },
+                getTenantFromArray: function (tenantId) {
+                    let me = this;
+                    for (var i = 0; i < me.AllTenants.length; i++) {
+                        if (tenantId == me.AllTenants[i].tenantID) {
+                            var tenant = me.AllTenants[i];
+                            return tenant;
+                        }
+                    }
+                },
+                SaveTenant: function () {
+                    let payload = this.editTenant;
+                    $.ajax({
+                        type: "POST",
+                        url: "/admin/EditTenant",
+                        data: payload,
+                        success: (data) => {
+                            if (data.success) {
+                                alert("Success!");
+                                $('#editTenantModal').modal('toggle');
+                                
+                            }
+                            else {
+                                alert(data.error);
+                            }
+                        },
+                    });
+                },
+                loadPopProperty: function (propertyID) {
+                    let me = this;
+                    jQuery("#" + propertyID).popover('toggle');
+                    for (var i = 0; i < properties; i++) {
+                        if (properties[i].propertyID === propertyID) {
+                            let p = properties[i];
+                            me.popoverProperty = p.address1 + " " + p.address2;
+
+                        }
+                    }
+                },
+                getTenants: function () {
+                    let me = this;
+                    $.ajax({
+                        type: "GET",
+                        url: "/admin/FetchAllTenants",
+                        success: (data) => {
+                            me.AllTenants = data.data;
+                        },
+                    });
+                },
+                fetchProperties: function () {
+                    let me = this;
+                    $.ajax({
+                        type: "GET",
+                        url: "/admin/FetchAllProperties",
+                        success: (response) => {
+                            me.properties = response.data;
+                        },
+                        complete: () => {
+
+                        }
+                    });
+                }
+            },
+            computed: {
+                characters: function () {
+                    if (this.request.description.length > 300) {
+                        this.hasTooManyChar = true;
+                        document.getElementById('description').classList.add('isInvalid');
+                    }
+                    else {
+                        this.hasTooManyChar = false;
+                        document.getElementById('description').classList.remove('isInvalid');
+                    }
+                    return this.request.description.length;
+                },
+                selected: {
+                    get() {
+                        return this.tenant.propertyID;
+                    },
+                    set(optionsValue) {
+                        this.tenant.propertyID = optionsValue
+                    },
+                },
+            },
+            filters: {
+                currency: function (value) {
+                    if (!value)
+                        return
+
+                    return "$" + value.toFixed(2);
+                },
+            },
+        })
+    }
+
+</script>
+

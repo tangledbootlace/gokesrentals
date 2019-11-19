@@ -1,0 +1,215 @@
+﻿
+@{
+    ViewData["Title"] = "maintenance";
+    Layout = "~/Views/Shared/_Admin_Layout.cshtml";
+}
+
+<div class="jumbotron jumbotron-fluid" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="container">
+        <h1>Maintenance</h1>
+    </div>
+</div>
+<div id="maintenanceRequest">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <h3>Open</h3>
+                <table class="table table-striped">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th style="width: 5%">Property#</th>
+                            <th style="width: 5%">Request#</th>
+                            <th style="width: 20%">Subject</th>
+                            <th style="width: 50%">Description</th>
+                            <th style="width: 10%">Opened</th>
+                            <th style="width: 5%">Close</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-cloak v-for="requests in requestHistory.active">
+                            <td>{{requests.propertyID}}</td>
+                            <td>{{requests.ticketID}}</td>
+                            <td>{{requests.summary}}</td>
+                            <td>{{requests.description}}</td>
+                            <td>{{requests.openDate | time}}</td>
+                            <td><button class="btn btn-outline-primary" v-on:click="openCloseModal(requests.ticketID)"><i class="fas fa-archive"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="col">
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <h3>Closed</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">Property#</th>
+                            <th style="width: 5%">Request#</th>
+                            <th style="width: 20%">Subject</th>
+                            <th style="width: 50%">Description</th>
+                            <th style="width: 10%">Closed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-cloak v-for="requests in requestHistory.inactive">
+                            <td>{{requests.propertyID}}</td>
+                            <td>{{requests.ticketID}}</td>
+                            <td>{{requests.summary}}</td>
+                            <td>{{requests.description}}</td>
+                            <td>{{requests.endDate | time}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @*Close Maintenance Modal*@
+    <form class="needs-validation" v-on:submit.prevent="" novalidate>
+        <div class="modal fade" id="maintenanceModal" role="dialog">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Close Maintenance Request</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row justify-content-center">
+                            <div class="col-4">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="Cost of Repair" id="cost" v-model="MaintenanceRequest.cost" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a cost of repair
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button v-cloak v-if="btnSubmitBusy" class="btn btn-success" disabled>Working...&nbsp;&nbsp;<i class="fa fa-sync fa-spin"></i></button>
+                        <button class="btn btn-success" v-else v-on:click="closeRequest">Close Maitenance Request</button>
+
+                        <button class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    window.onload = function () {
+        var maintenanceRequest = new Vue({
+            el: '#maintenanceRequest',
+            mounted: function () {
+                this.getRequests();
+            },
+            data: {
+                request: {
+                    summary: '',
+                    description: ''
+                },
+                requestHistory: {
+                    active: [],
+                    inactive: []
+                },
+                MaintenanceRequest: {
+                    cost: '',
+                    ticketID: ''
+                },
+
+                btnSubmitBusy: false,
+                hasTooManyChar: false
+
+            },
+            methods: {
+                createRequest: function () {
+                    let me = this;
+                    if (!this.hasTooManyChar && this.request.description !== '' && this.request.summary !== '') {
+                        $.ajax({
+                            type: "POST",
+                            url: "/Maintenance/MakeMaintenanceRequest",
+                            data: me.request,
+                            success: (data) => {
+                                alert("Sent Request");
+                                console.log("ok");
+                                me.getRequests();
+                            },
+                        });
+                    }
+                },
+                getRequests: function () {
+                    let me = this;
+                    $.ajax({
+                        type: "GET",
+                        url: "/admin/FetchAllMaitenanceRequest",
+                        success: (data) => {
+                            me.requestHistory.active = data.active;
+                            me.requestHistory.inactive = data.inactive;
+                        },
+                    });
+                },
+                closeRequest: function () {
+                    let me = this;
+
+                    if (this.MaintenanceRequest.ticketID !== '' && this.MaintenanceRequest.cost >= 0)
+                        $.ajax({
+                            type: "POST",
+                            url: "/admin/CloseMaitenanceRequest",
+                            data: me.MaintenanceRequest,
+                            success: (data) => {
+                                alert("Request Closed");
+                                console.log("ok");
+                                $('#maintenanceModal').modal('toggle');
+                                me.getRequests();
+                            },
+                        });
+                },
+
+                openCloseModal: function (ticketID) {
+
+                    let me = this;
+                    me.MaintenanceRequest.ticketID = ticketID;
+                    $('#maintenanceModal').modal('toggle');
+
+                }
+            },
+            computed: {
+                characters: function () {
+                    if (this.request.description.length > 300) {
+                        this.hasTooManyChar = true;
+                        document.getElementById('description').classList.add('isInvalid');
+                    }
+                    else {
+                        this.hasTooManyChar = false;
+                        document.getElementById('description').classList.remove('isInvalid');
+                    }
+                    return this.request.description.length;
+                }
+            },
+            filters: {
+                time: function (value) {
+                    if (!value)
+                        return
+                    var time = moment.utc(value);
+                    return time.local().format("MMMM Do YYYY, LT");
+                }
+            },
+        })
+    }
+
+</script>
+
+
